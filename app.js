@@ -16,6 +16,7 @@ dotenv.config() // .env 파일 변수 불러오기
 const v1 = require('./routes/v1') // 토큰 관련 라우터
 const authRouter = require('./routes/auth') // 회원 가입 및 로그인 라우터
 const indexRouter = require('./routes') // 메인 라우터
+const { sequelize } = require('./models')
 const passportConfig = require('./passport') // 로그인 로직 모듈 설정 파일
 
 const app = express()
@@ -28,6 +29,14 @@ nunjucks.configure('views', {
 	express: app,
 	watch: true,
 })
+sequelize
+	.sync({ force: false })
+	.then(() => {
+		console.log('데이터베이스 연결 성공')
+	})
+	.catch((err) => {
+		console.error(err)
+	})
 app.use(morgan('dev'))
 app.use(cors())
 app.use(express.json())
@@ -53,8 +62,7 @@ app.use('/v1', v1)
 app.use('/auth', authRouter)
 app.use('/', indexRouter)
 
-
-/* 에러 처리 라우터 */ 
+/* 에러 처리 라우터 */
 app.use((req, res, next) => {
 	const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`)
 	error.status = 404
