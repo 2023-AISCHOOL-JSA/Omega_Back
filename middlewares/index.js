@@ -19,22 +19,21 @@ const jwt = require('jsonwebtoken')
 
 // 토큰 검증 기능
 exports.verifyToken = (req, res, next) => {
-	console.log(req.get('origin'));
 	try {
 		res.locals.decoded = jwt.verify(
 			req.headers.authorization,
-			process.env.JWT_SECRET
+			process.env.JWT_SECRET,
 		)
 		return next()
 	} catch (error) {
 		if (error.name === 'TokenExpiredError') {
-			return res.status(419).json({
-				code: 419,
+			return res.json({
+				status: 'fail',
 				message: '토큰이 만료되었습니다.',
 			})
 		}
 	}
-	return res.status(401).json({
+	return res.json({
 		code: 401,
 		message: '유효하지 않은 토큰입니다.',
 	})

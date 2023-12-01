@@ -4,11 +4,13 @@
   "description": "백서버",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start" : "nodemon"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@elastic/elasticsearch": "^8.10.0",
     "axios": "^1.6.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
@@ -19,14 +21,13 @@
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.3",
     "nunjucks": "^3.2.4",
     "passport": "^0.6.0",
     "passport-kakao": "^1.0.1",
     "passport-local": "^1.0.0",
     "prettier": "^3.0.3",
-    "sequelize": "^6.34.0",
-    "sequelize-cli": "^6.6.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

@@ -11,8 +11,8 @@ module.exports = () => {
 				passReqToCallback: false,
 			},
 			async (mb_id, mb_pw, done) => {
+				const conn = await createConnection()
 				try {
-					const conn = await createConnection()
 					const sql = 'SELECT * FROM t_member WHERE mb_id = ?'
 					const values = [mb_id]
 					const [result] = await conn.execute(sql, values)
@@ -29,6 +29,10 @@ module.exports = () => {
 				} catch (error) {
 					console.error(error)
 					done(error)
+				} finally {
+					if (conn) {
+						conn.end()
+					}
 				}
 			},
 		),

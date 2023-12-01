@@ -4,21 +4,20 @@ exports.createToken = async (req, res) => {
 	try {
 		const token = jwt.sign(
 			{
-				id: res.locals.mb_id,
-				nick: res.locals.mb_name,
+				mb_id: res.locals.mb_id,
+				mb_name: res.locals.mb_name,
 			},
 			process.env.JWT_SECRET,
 			{ expiresIn: '1h', issuer: 'campusstay' },
 		)
 		return res.json({
-			code: 200,
-			message: '토큰이 발급되었습니다.',
-			token,
+			status: 'success',
+			data: { token },
 		})
 	} catch (error) {
-		console.error(error)
-		return res.status(500).send({
-			code: 500,
+		// console.error(error)
+		return res.json({
+			status : 'error',
 			message: '서버 에러',
 		})
 	}

@@ -12,8 +12,9 @@ const config = {
 	database: process.env.DB_NAME,
 }
 
-const conn = async () => {
-	return await mysql.createConnection(config)
+const createConnection = async () => {
+	const conn = await mysql.createConnection(config)
+	return conn
 }
 
-module.exports = conn
+module.exports = createConnection
