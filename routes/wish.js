@@ -38,6 +38,8 @@ router.get('/me', verifyToken, async (req, res) => {
 
 		const [result] = await conn.execute(sql, value)
 
+		console.log(result);
+
 		return res.json({
 			status: 'success',
 			data: result,

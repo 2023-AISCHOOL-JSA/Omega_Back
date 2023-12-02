@@ -53,7 +53,7 @@ const upload = multer({
 
 // GET  /search/place   여행지 검색 기능
 router.get('/place', async (req, res) => {
-	const { keyword, pla_code, region_no, center_lat, center_lng} = req.query
+	const { keyword, pla_code, region_no, center_lat, center_lng } = req.query
 	let query = {}
 	let size = 20
 	// case1. 검색어 + 지도중심좌표
@@ -93,7 +93,7 @@ router.get('/place', async (req, res) => {
 				filter: [
 					{
 						term: {
-							pla_code_main:pla_code,
+							pla_code_main: pla_code,
 						},
 					},
 					{
@@ -101,10 +101,15 @@ router.get('/place', async (req, res) => {
 							region_no: region_no,
 						},
 					},
+					{
+						exists: {
+							field: 'pla_thumb',
+						},
+					},
 				],
 			},
 		}
-		size = 10000
+		size = 100
 	} else {
 		// 예외
 	}
@@ -112,16 +117,17 @@ router.get('/place', async (req, res) => {
 		const result = await client.search({
 			index: 'test1',
 			query: query,
-			size : size
+			size: size,
 		})
 		const data = result.hits.hits.map((item) => {
 			const { pla_location, pla_thumb, ...item2 } = item._source
 			return {
 				...item2,
 				latlng: { lat: pla_location.lat, lng: pla_location.lon },
-				img : pla_thumb
+				img: pla_thumb,
 			}
 		})
+		console.log(data.length)
 		res.send({ status: 'success', data: data })
 	} catch (error) {
 		console.error(error)
@@ -129,8 +135,8 @@ router.get('/place', async (req, res) => {
 })
 
 /* POST /search/img     이미지 검색 기능 */
-router.post('/img', verifyToken, upload.single('img'), async (req, res) => {
-	console.log('..................', req.file)
+router.post('/img', upload.single('img'), async (req, res) => {
+	// console.log('..................', req.file)
 	axios
 		.post('http://127.0.0.1:5000/upload', {
 			file_path: `C:/Users/gjaischool/Desktop/real-project/back1/uploads/${req.file.filename}`,
@@ -142,15 +148,20 @@ router.post('/img', verifyToken, upload.single('img'), async (req, res) => {
 
 			const conn = await createConnection()
 			try {
-				const sql = `SELECT * FROM t_place WHERE pla_no IN (${pla_no_list.map(
+				const sql = `SELECT B.sd_nm region_name, A.* FROM t_place A JOIN t_region B on (A.region_no = B.sgg_cd) WHERE pla_no IN (${pla_no_list.map(
 					(item) => '?',
 				)}) order by field(pla_no, ${pla_no_list.map((item) => '?')})`
 				const value = pla_no_list.concat(pla_no_list)
 				const [result] = await conn.execute(sql, value)
 
+				const result2 = result.map((item, idx) => {
+					const { lat, lng, ...place } = item
+					return {...place, latlng:{lat,lng}, img:analysis_data[idx].img_original_name}
+				})
+
 				return res.json({
 					status: 'success',
-					data: result,
+					data: result2,
 				})
 			} catch {
 				return res.json({

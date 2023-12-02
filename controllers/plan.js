@@ -2,8 +2,14 @@ const createConnection = require('../config/database2')
 
 /* 플랜 생성 기능 */
 exports.createPlan = async (req, res) => {
-	const { plan_name, plan_info, plan_region, started_date, ended_date, region_no } =
-		req.body.myPlan
+	const {
+		plan_name,
+		plan_info,
+		plan_region,
+		started_date,
+		ended_date,
+		region_no,
+	} = req.body.myPlan
 	const conn = await createConnection()
 	try {
 		const sql =
@@ -40,9 +46,15 @@ exports.createPlan = async (req, res) => {
 
 /* 플랜 리스트 조회 기능 */
 exports.getPlanList = async (req, res) => {
+	const { order } = req.query
+
 	const conn = await createConnection()
 	try {
-		const sql = 'SELECT * FROM t_plan WHERE mb_id = ? ORDER BY plan_at DESC LIMIT 3'
+		const sql = `SELECT * FROM t_plan WHERE mb_id = ? AND now() ${
+			Number(order) === 1 ? '>' : '<'
+		} ended_date ORDER BY started_date ${
+			Number(order) === 1 ? 'DESC' : 'ASC'
+		} LIMIT 3`
 		const value = [res.locals.decoded.mb_id]
 
 		const [result] = await conn.execute(sql, value)
@@ -70,7 +82,8 @@ exports.getPlan = async (req, res) => {
 	const { plan_no } = req.params
 	const conn = await createConnection()
 	try {
-		const sql = 'SELECT * FROM t_plan WHERE plan_no = ?'
+		const sql =
+			'SELECT B.lat, B.lng, A.* FROM t_plan A JOIN t_region B on (A.region_no = B.sd_cd) WHERE plan_no = ?'
 		const value = [plan_no]
 
 		const [result] = await conn.execute(sql, value)
@@ -110,8 +123,9 @@ exports.updatePlan = async (req, res) => {
 	console.log('플랜 갱신...')
 
 	const { plan_no } = req.params
-	console.log(req.body);
-	const { plan_name, plan_info, started_date, ended_date, plan_region } = req.body.myPlan
+	console.log(req.body)
+	const { plan_name, plan_info, started_date, ended_date, plan_region } =
+		req.body.myPlan
 	const conn = await createConnection()
 
 	try {
@@ -190,10 +204,10 @@ exports.deletePlan = async (req, res) => {
 
 /* 플랜 상세 저장 및 갱신 */
 exports.setPlanDetail = async (req, res) => {
-	const data = req.body
+	const data = req.body.myListObj
 	const { plan_no } = req.params
 
-	// console.log(data);
+	console.log(data)
 
 	const days = Object.keys(data)
 	const routes = Object.values(data)
@@ -207,16 +221,17 @@ exports.setPlanDetail = async (req, res) => {
 			const routeSize = routes[idx].length
 			const value = [plan_no, item, routes[idx], routes[idx]]
 			const [result] = await conn.execute(sql, value)
-
-			const sql2 = `INSERT INTO t_reservation (mb_id, reservation_yn, plan_no, plan_day, pla_no) VALUES (?, 'n', ?, ?, ?) ON DUPLICATE KEY UPDATE pla_no = ?`
-			const value2 = [
-				res.locals.decoded.mb_id,
-				plan_no,
-				item,
-				routes[idx][routeSize - 1],
-				routes[idx][routeSize - 1],
-			]
-			await conn.execute(sql2, value2)
+			if (days.length - 1 > idx) {
+				const sql2 = `INSERT INTO t_reservation (mb_id, reservation_yn, plan_no, plan_day, pla_no) VALUES (?, 'n', ?, ?, ?) ON DUPLICATE KEY UPDATE pla_no = ?`
+				const value2 = [
+					res.locals.decoded.mb_id,
+					plan_no,
+					item,
+					routes[idx][routeSize - 1],
+					routes[idx][routeSize - 1],
+				]
+				await conn.execute(sql2, value2)
+			}
 		})
 		const sql3 = `DELETE FROM t_plandetail WHERE plan_no = ? AND plan_day > ?`
 		const value3 = [plan_no, days.length]
@@ -257,14 +272,13 @@ exports.getPlanDetail = async (req, res) => {
 				.substring(1, plan_route.length - 1)
 				.split(',')
 
-			const sql2 = `SELECT A.pla_no, A.region_no, A.region_sub, A.pla_addr, A.lat, A.lng, A.pla_name, A.pla_code_main, A.pla_code_sub, ? plan_day, ? planIdx FROM t_place A WHERE A.pla_no IN (${plan_route_arr.map(
+			const sql2 = `SELECT CONVERT(?, CHAR) as my_day, @rownum := @rownum + 1 AS markerIndex, A.*, B.img_original_name img, C.sd_nm region_main FROM (SELECT @rownum :=0) AS r, t_place A JOIN t_place_image B ON (A.pla_no = B.pla_no) JOIN t_region C ON (A.region_no = C.sgg_cd) WHERE A.pla_no IN  (${plan_route_arr.map(
 				(arrItem) => '?',
-			)}) order by field(pla_no, ${plan_route_arr.map((arrItem) => '?')})`
+			)}) order by field(A.pla_no, ${plan_route_arr.map((arrItem) => '?')})`
 			const plan_route_parseInt = plan_route_arr.map((item) => parseInt(item))
-			const value2 = [resultItem.plan_day, resultIdx]
+			const value2 = [resultItem.plan_day]
 				.concat(plan_route_parseInt)
 				.concat(plan_route_parseInt)
-
 			const [result2] = await conn.execute(sql2, value2)
 
 			return result2.map((item) => {
@@ -273,10 +287,14 @@ exports.getPlanDetail = async (req, res) => {
 			})
 		})
 		const data_pre = await Promise.all(data)
+
+		const data_pre_flat = data_pre.flat()
 		return await res.json({
 			status: 'success',
-			data: { data_pre },
+			data: data_pre_flat,
 		})
+
+
 	} catch (error) {
 		console.log(error)
 		return res.json({
