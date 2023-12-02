@@ -262,6 +262,8 @@ exports.getPlanDetail = async (req, res) => {
 
 	const conn = await createConnection()
 
+	bgArr = ['#34EAAD', '#EBDA34', '#1F3871']
+
 	try {
 		const sql = `SELECT * FROM t_plandetail WHERE plan_no = ?`
 		const value = [plan_no]
@@ -272,29 +274,34 @@ exports.getPlanDetail = async (req, res) => {
 				.substring(1, plan_route.length - 1)
 				.split(',')
 
-			const sql2 = `SELECT CONVERT(?, CHAR) as my_day, @rownum := @rownum + 1 AS markerIndex, A.*, B.img_original_name img, C.sd_nm region_main FROM (SELECT @rownum :=0) AS r, t_place A JOIN t_place_image B ON (A.pla_no = B.pla_no) JOIN t_region C ON (A.region_no = C.sgg_cd) WHERE A.pla_no IN  (${plan_route_arr.map(
+			const sql2 = `SELECT CONVERT(?, CHAR) as myDay, @rownum := @rownum + 1 AS markerIndex, A.*, B.img_original_name img, C.sd_nm region_main FROM (SELECT @rownum :=0) AS r, t_place A JOIN t_place_image B ON (A.pla_no = B.pla_no) JOIN t_region C ON (A.region_no = C.sgg_cd) WHERE B.img_thumb = 'y' AND A.pla_no IN  (${plan_route_arr.map(
 				(arrItem) => '?',
 			)}) order by field(A.pla_no, ${plan_route_arr.map((arrItem) => '?')})`
 			const plan_route_parseInt = plan_route_arr.map((item) => parseInt(item))
 			const value2 = [resultItem.plan_day]
-				.concat(plan_route_parseInt)
-				.concat(plan_route_parseInt)
+			.concat(plan_route_parseInt)
+			.concat(plan_route_parseInt)
 			const [result2] = await conn.execute(sql2, value2)
-
+			
 			return result2.map((item) => {
+				const bgIdx = Number(item.myDay) > 3 ? 2 : Number(item.myDay) - 1
 				const { lat, lng, ...item2 } = item
-				return { ...item2, latlng: { lat, lng } }
+				return {
+					...item2,
+					latlng: { lat, lng },
+					bgColor: { backgroundColor: bgArr[bgIdx] },
+				}
 			})
 		})
+
 		const data_pre = await Promise.all(data)
 
 		const data_pre_flat = data_pre.flat()
+
 		return await res.json({
 			status: 'success',
 			data: data_pre_flat,
 		})
-
-
 	} catch (error) {
 		console.log(error)
 		return res.json({
