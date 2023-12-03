@@ -262,7 +262,18 @@ exports.getPlanDetail = async (req, res) => {
 
 	const conn = await createConnection()
 
-	bgArr = ['#34EAAD', '#EBDA34', '#1F3871']
+	bgArr = [
+		'#34EAAD',
+		'#EBDA34',
+		'#1F3871',
+		'#ea3434',
+		'#58ea34',
+		'#ea3489',
+		'#ea8334',
+		'#34bdea',
+		'#3440ea',
+		'#9234ea',
+	]
 
 	try {
 		const sql = `SELECT * FROM t_plandetail WHERE plan_no = ?`
@@ -279,12 +290,12 @@ exports.getPlanDetail = async (req, res) => {
 			)}) order by field(A.pla_no, ${plan_route_arr.map((arrItem) => '?')})`
 			const plan_route_parseInt = plan_route_arr.map((item) => parseInt(item))
 			const value2 = [resultItem.plan_day]
-			.concat(plan_route_parseInt)
-			.concat(plan_route_parseInt)
+				.concat(plan_route_parseInt)
+				.concat(plan_route_parseInt)
 			const [result2] = await conn.execute(sql2, value2)
-			
+
 			return result2.map((item) => {
-				const bgIdx = Number(item.myDay) > 3 ? 2 : Number(item.myDay) - 1
+				const bgIdx = Number(item.myDay) > bgArr.length ? bgArr.length-1 : Number(item.myDay) - 1
 				const { lat, lng, ...item2 } = item
 				return {
 					...item2,

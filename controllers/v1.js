@@ -8,7 +8,7 @@ exports.createToken = async (req, res) => {
 				mb_name: res.locals.mb_name,
 			},
 			process.env.JWT_SECRET,
-			{ expiresIn: '1h', issuer: 'campusstay' },
+			{ expiresIn: '1d', issuer: 'campusstay' },
 		)
 		return res.json({
 			status: 'success',

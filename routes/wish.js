@@ -33,16 +33,19 @@ router.get('/me', verifyToken, async (req, res) => {
 	console.log('위시리스트 조회...')
 	const conn = await createConnection()
 	try {
-		const sql = `SELECT d.img_original_name, c.sd_nm, a.* FROM t_place a JOIN t_wishlist b ON a.pla_no = b.pla_no join t_region c on a.region_no = c.sgg_cd join t_place_image d on a.pla_no = d.pla_no WHERE b.mb_id = '2943843265' and d.img_thumb = 'y' ORDER BY b.created_at DESC`
+		const sql = `SELECT d.img_original_name img, c.sd_nm region_main, a.* FROM t_place a JOIN t_wishlist b ON a.pla_no = b.pla_no join t_region c on a.region_no = c.sgg_cd join t_place_image d on a.pla_no = d.pla_no WHERE b.mb_id = '2943843265' and d.img_thumb = 'y' ORDER BY b.created_at DESC`
 		const value = [res.locals.decoded.mb_id]
 
 		const [result] = await conn.execute(sql, value)
 
-		console.log(result);
+		const result2 = result.map((item) => {
+			const { lat, lng, ...item2 } = item
+			return {'latlng' : {lat:lat, lng:lng}, ...item2}
+		})
 
 		return res.json({
 			status: 'success',
-			data: result,
+			data: result2,
 		})
 	} catch (err) {
 		console.log(err)
@@ -63,6 +66,11 @@ router.delete('/:pla_no', verifyToken, async (req, res) => {
 		const value = [res.locals.decoded.mb_id, pla_no]
 
 		const [result] = await conn.execute(sql, value)
+
+		return res.json({
+			status: 'success',
+			data: '',
+		})
 	} catch (err) {
 		console.log(err)
 	} finally {

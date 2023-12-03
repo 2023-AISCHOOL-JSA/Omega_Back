@@ -10,7 +10,7 @@ router.get('/me', verifyToken, async (req, res) => {
 
 	try {
 		const sql =
-			'SELECT c.plan_no, a.plan_day, a.pla_no, a.reservation_cost, a.reservation_yn, a.room_n, b.pla_name, c.started_date from t_reservation a join t_place b on ( a.pla_no = b.pla_no ) join t_plan c on (a.plan_no = c.plan_no) where c.mb_id = ?  and c.started_date > now()'
+			'SELECT c.plan_no, a.plan_day, a.pla_no, a.reservation_cost, a.reservation_yn, a.room_n, b.pla_name, c.started_date from t_reservation a join t_place b on ( a.pla_no = b.pla_no ) join t_plan c on (a.plan_no = c.plan_no) where c.mb_id = ? ORDER BY plan_no DESC'
 		const value = [res.locals.decoded.mb_id]
 
 		const [result] = await conn.execute(sql, value)

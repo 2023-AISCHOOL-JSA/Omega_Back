@@ -127,7 +127,6 @@ router.get('/place', async (req, res) => {
 				img: pla_thumb,
 			}
 		})
-		console.log(data.length)
 		res.send({ status: 'success', data: data })
 	} catch (error) {
 		console.error(error)

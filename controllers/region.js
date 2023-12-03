@@ -69,3 +69,57 @@ exports.getRegionGuide = async (req, res) => {
 		}
 	}
 }
+
+exports.getRegionDormitory = async (req, res) => {
+	const { region_no } = req.params
+
+	const conn = await createConnection()
+	try {
+		const sql =
+			`select B.img_original_name, C.sd_nm region_main, A.* from t_place A JOIN t_place_image B ON (A.pla_no = B.pla_no) JOIN t_region C ON (A.region_no = C.sgg_cd) where B.img_thumb = 'y' AND A.region_no = ? AND A.pla_code_main = '숙박' order by RAND() LIMIT 4`
+
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 3;
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 3;
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 2;
+		const value = [region_no]
+		let [result] = await conn.execute(sql, value)
+
+		return res.json({
+			status: 'success',
+			data: result,
+		})
+	} catch (err) {
+		console.log(err)
+	} finally {
+		if (conn) {
+			conn.end()
+		}
+	}
+}
+
+exports.getRegionPlace = async (req, res) => {
+	const { region_no } = req.params
+
+	const conn = await createConnection()
+	try {
+		const sql =
+			`select B.img_original_name, C.sd_nm region_main, A.* from t_place A JOIN t_place_image B ON (A.pla_no = B.pla_no) JOIN t_region C ON (A.region_no = C.sgg_cd) where B.img_thumb = 'y' AND A.region_no = ? AND A.pla_code_main <> '숙박' order by RAND() LIMIT 10`
+
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 3;
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 3;
+// select * from t_place where region_no = 29000 and pla_code_main <> '숙박' order by RAND() LIMIT 2;
+		const value = [region_no]
+		let [result] = await conn.execute(sql, value)
+
+		return res.json({
+			status: 'success',
+			data: result,
+		})
+	} catch (err) {
+		console.log(err)
+	} finally {
+		if (conn) {
+			conn.end()
+		}
+	}
+}
