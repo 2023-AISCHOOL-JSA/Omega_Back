@@ -149,7 +149,10 @@ router.put('/:plan_no', async (req, res) => {
 			`UPDATE t_reservation SET reservation_yn = 'y' WHERE plan_no = ?`
 		const value = [plan_no]
 
+		const sql2 = `UPDATE t_plan SET pay_yn = 'y' WHERE plan_no = ?`
+
 		const [result] = await conn.execute(sql, value)
+		const [result2] = await conn.execute(sql2, value)
 
 		return res.json({
 			status: 'success',

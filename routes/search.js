@@ -65,7 +65,7 @@ router.get('/place', async (req, res) => {
 			function_score: {
 				query: {
 					match: {
-						keywordLoc: keyword,
+						keywordText: keyword,
 					},
 				},
 				functions: [
@@ -79,8 +79,28 @@ router.get('/place', async (req, res) => {
 								},
 							},
 						},
-						weight: 2, // 명시적으로 가중치를 설정
+						weight: 10, // 명시적으로 가중치를 설정
 					},
+					{
+						filter: {
+							match: {
+								keywordLoc: {
+									query: keyword,
+								},
+							},
+						},
+						weight: 1,
+					},
+					{
+						filter: {
+							match: {
+								region_main: {
+									query: keyword,
+								},
+							},
+						},
+						weight: 3,
+					}
 				],
 				score_mode: 'sum',
 				boost_mode: 'sum',
@@ -136,6 +156,7 @@ router.get('/place', async (req, res) => {
 /* POST /search/img     이미지 검색 기능 */
 router.post('/img', upload.single('img'), async (req, res) => {
 	// console.log('..................', req.file)
+	const { region_no, lng, lat } = req.body
 	axios
 		.post('http://127.0.0.1:5000/upload', {
 			file_path: `C:/Users/gjaischool/Desktop/real-project/back1/uploads/${req.file.filename}`,
@@ -147,15 +168,21 @@ router.post('/img', upload.single('img'), async (req, res) => {
 
 			const conn = await createConnection()
 			try {
-				const sql = `SELECT B.sd_nm region_name, A.* FROM t_place A JOIN t_region B on (A.region_no = B.sgg_cd) WHERE pla_no IN (${pla_no_list.map(
+				const sql = `SELECT B.sd_nm region_main, A.* FROM t_place A JOIN t_region B on (A.region_no = B.sgg_cd) WHERE pla_no IN (${pla_no_list.map(
 					(item) => '?',
-				)}) order by field(pla_no, ${pla_no_list.map((item) => '?')})`
-				const value = pla_no_list.concat(pla_no_list)
+				)}) order by A.region_no = ? DESC, field(pla_no, ${pla_no_list.map(
+					(item) => '?',
+				)})`
+				const value = [...pla_no_list, region_no, ...pla_no_list]
 				const [result] = await conn.execute(sql, value)
 
 				const result2 = result.map((item, idx) => {
 					const { lat, lng, ...place } = item
-					return {...place, latlng:{lat,lng}, img:analysis_data[idx].img_original_name}
+					return {
+						...place,
+						latlng: { lat, lng },
+						img: analysis_data[idx].img_original_name,
+					}
 				})
 
 				return res.json({
